@@ -1,5 +1,6 @@
 import numpy as np
-import scipy as sp
+import scipy
+import scipy.special
 #
 def gaussian_regression_p1(dx, heights, lamb):
 #
@@ -38,7 +39,7 @@ def gaussian_regression_p1(dx, heights, lamb):
     x3 = x
     x3[n-nlambda:n] = np.flip(x[0:nlambda],axis=0)
     sgauss = np.exp(-np.pi*np.square(x3)/((alpha*lamb)**2))
-    mu0 = sp.special.erf(np.sqrt(np.pi)*x3/(alpha*lamb))
+    mu0 = scipy.special.erf(np.sqrt(np.pi)*x3/(alpha*lamb))
     mu0 = 0.5*( mu0 + 1 )
     mu1 = -( (lamb*alpha)/(2.0*np.pi) ) * sgauss
     mu2 = ((lamb*alpha)**2/(2.0*np.pi) ) * ( mu0 - (x3/(lamb*alpha)) * sgauss) 
