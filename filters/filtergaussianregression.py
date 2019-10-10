@@ -2,55 +2,53 @@ import numpy as np
 import scipy
 from scipy import special
 #
-def gaussian_regression_p1(dx, heights, lamb):
+def gaussian_reg_p1(dx, heights, lamb):
 #
 # the profiles have to be the rows
 #
-# filter constant
-    alpha = np.sqrt(np.log(2)/np.pi)
+# filter constant multiplied with cut off wavelength
+    alpha_lamb = np.sqrt(np.log(2)/np.pi) * lamb
 #
-    n = len(heights)
-    nh = int(n/2) + 1
+    numh = len(heights)
     nlambda = int(np.floor(lamb/dx)) + 1
-    x = np.array(np.arange(0,n)*dx)
-    x2 = np.concatenate((x,np.array(np.arange(-nlambda,0,1)*dx)))
-    n2 = len(x2)
-    heightextended = np.zeros(n2)
-    heightextended[0:n] = heights
+    x_1 = np.array(np.arange(0, numh)*dx)
+    x_2 = np.concatenate((x_1, np.array(np.arange(-nlambda, 0, 1)*dx)))/alpha_lamb
+    heightextended = np.zeros(len(x_2))
+    heightextended[0:numh] = heights
 #
-    sgauss = np.exp(-np.pi*np.square(x2)/(alpha*lamb)**2)/(alpha*lamb)
+    sgauss = np.exp(-np.pi*np.square(x_2))/(alpha_lamb)
 # (1) Fourier trafos fuer die Inhomogenitaet des Gl-sys.:
 # (1.a) z-Werte:
 #     dazu fuer die periodische Fortsetzung verlaengern
-    Fz = np.fft.fft(heightextended)
+    fourier_height = np.fft.fft(heightextended)
 # (1.b)
-    Fsgauss = np.fft.fft(sgauss)
-    sgaussx = np.multiply(x2,sgauss)
-    Fsgaussx = np.fft.fft(sgaussx)
-    spR1 = np.multiply(Fz,Fsgauss)
-    spR2 = np.multiply(Fz,Fsgaussx)
-    R1 = np.fft.ifft(spR1)*dx;
-    R2 = np.fft.ifft(spR2)*dx;
+    fourier_sgauss = np.fft.fft(sgauss)
+    sgaussx = np.multiply(x_2, sgauss)
+    fourier_sgaussx = np.fft.fft(sgaussx)
+    fourier_r1 = np.multiply(fourier_height, fourier_sgauss)
+    fourier_r2 = np.multiply(fourier_height, fourier_sgaussx)
+    r_1 = np.fft.ifft(fourier_r1) * dx
+    r_2 = np.fft.ifft(fourier_r2) * dx
 #
 # (2) Gleichungssystem des RG-Filters loesen
 # (1.a) Momentenmatrix, hier die Gaussglocke
 #       mit dem Maximum und nicht mit der
 #       Flaeche auf 1 normiert verwenden
-    x3 = x
-    x3[n-nlambda:n] = np.flip(x[0:nlambda],axis=0)
-    sgauss = np.exp(-np.pi*np.square(x3)/((alpha*lamb)**2))
-    mu0 = special.erf(np.sqrt(np.pi)*x3/(alpha*lamb))
-    mu0 = 0.5*( mu0 + 1 )
-    mu1 = -( (lamb*alpha)/(2.0*np.pi) ) * sgauss
-    mu2 = ((lamb*alpha)**2/(2.0*np.pi) ) * ( mu0 - (x3/(lamb*alpha)) * sgauss) 
+    x_3 = x_1
+    x_3[numh-nlambda:numh] = np.flip(x_1[0:nlambda], axis=0)
+    sgauss3 = np.exp(-np.pi*np.square(x_3/alpha_lamb))
+    mu0 = special.erf(np.sqrt(np.pi)*x_3/(alpha_lamb))
+    mu0 = 0.5*(mu0 + 1)
+    mu1 = -(alpha_lamb / (2.0*np.pi)) * sgauss3
+    mu2 = (alpha_lamb**2 / (2.0*np.pi)) * (mu0 - (x_3/alpha_lamb) * sgauss3) 
 #
 # (1.b) 2 \times 2 Gl-Sys. aufgeloest
-    d = mu2*mu0 - mu1**2
-    b0 = mu2/d
-    sig = np.ones(n)
+    determi = mu2*mu0 - mu1**2
+    b_0 = mu2/determi
+    sig = np.ones(numh)
     sig[0:nlambda] = -1
-    b1 = sig*mu1/d
-    wout = np.zeros(n)
-    wout = b0*np.real(R1[0:n]) + b1*np.real(R2[0:n])
+    b_1 = sig*mu1/determi
+    wout = np.zeros(numh)
+    wout = b_0*np.real(r_1[0:numh]) + b_1*np.real(r_2[0:numh])
     return wout
 

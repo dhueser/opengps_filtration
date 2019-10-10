@@ -13,7 +13,7 @@ class TestFilter(unittest.TestCase):
         zsin = content['zsin'][0]
         zdat = content['zdat'][0]
         #
-        wavi = gr.gaussian_regression_p1(dx, zdat, lambda_c)
+        wavi = gr.gaussian_reg_p1(dx, zdat, lambda_c)
         #
         numdata = len(zdat)
         mid = int(numdata/2)
